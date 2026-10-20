@@ -40,10 +40,10 @@ plt.rcParams.update({
 # FUNGSI RENDER GRAFIK
 # =========================
 
-def render_chart(fig):
-    try:
-        buffer = io.BytesIO()
+def render_chart(fig, chart_key):
+    buffer = io.BytesIO()
 
+    try:
         fig.savefig(
             buffer,
             format="png",
@@ -54,22 +54,19 @@ def render_chart(fig):
 
         png_bytes = buffer.getvalue()
 
-        # Pastikan PNG benar-benar valid
         buffer.seek(0)
         with Image.open(buffer) as image:
             image.verify()
 
         st.write("Ukuran file PNG:", len(png_bytes), "bytes")
-
-        # Tes: tampilkan gambar melalui Streamlit
         st.image(png_bytes)
 
-        # Sediakan unduhan untuk menguji hasil PNG secara terpisah
         st.download_button(
             "Unduh grafik untuk tes",
             data=png_bytes,
-            file_name="grafik_tes.png",
-            mime="image/png"
+            file_name=f"{chart_key}.png",
+            mime="image/png",
+            key=f"download_{chart_key}"
         )
 
     except Exception as e:
@@ -292,7 +289,7 @@ else:
     sns.despine(ax=ax)
     fig.tight_layout()
 
-    render_chart(fig)
+    render_chart(fig, "grafik_jam")
 
     st.divider()
 
@@ -338,7 +335,7 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        render_chart(fig)
+        render_chart(fig, "grafik_musim")
 
 
     # =========================
@@ -393,7 +390,7 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        render_chart(fig)
+        render_chart(fig, "grafik_cuaca")
 
     st.divider()
 
