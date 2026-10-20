@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -455,4 +454,3 @@ with st.expander("Lihat data penyewaan"):
 st.caption(
     "Sumber: Bike Sharing Dataset, Capital Bikeshare, 2011–2012."
 )
-```
