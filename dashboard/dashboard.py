@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -213,4 +212,3 @@ if not main_df.empty:
 
 else:
     st.warning("Tidak ada data untuk rentang tanggal yang dipilih.")
-```
