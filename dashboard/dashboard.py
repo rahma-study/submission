@@ -14,17 +14,17 @@ st.set_page_config(
 PRIMARY_COLOR = "#23856D"
 SECONDARY_COLOR = "#DCEFE8"
 
+
 # =========================
 # LOAD DATA
 # =========================
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR.parent / "data"
 
 
 @st.cache_data
 def load_data():
-    hour_path = DATA_DIR / "hour.csv"
-    day_path = DATA_DIR / "day.csv"
+    hour_path = BASE_DIR / "hour_clean.csv"
+    day_path = BASE_DIR / "day_clean.csv"
 
     if not hour_path.exists():
         raise FileNotFoundError(
