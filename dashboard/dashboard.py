@@ -1,447 +1,240 @@
+
 from pathlib import Path
-from PIL import Image
-import io
+
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import seaborn as sns
 import streamlit as st
 
-
 # =========================
-# KONFIGURASI DASHBOARD
+# KONFIGURASI HALAMAN
 # =========================
 st.set_page_config(
     page_title="Bike Sharing Dashboard",
     page_icon="🚲",
-    layout="wide"
+    layout="wide",
 )
 
-sns.set_theme(style="whitegrid")
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR.parent / "data"
 
-PRIMARY_COLOR = "#23856D"
-SECONDARY_COLOR = "#DCEFE8"
-TEXT_COLOR = "#263A35"
-
-plt.rcParams.update({
-    "font.family": "sans-serif",
-    "axes.labelcolor": TEXT_COLOR,
-    "xtick.color": TEXT_COLOR,
-    "ytick.color": TEXT_COLOR,
-    "text.color": TEXT_COLOR,
-    "figure.facecolor": "white",
-    "axes.facecolor": "white",
-    "axes.edgecolor": "#D9E2DE"
-})
-
-
-# =========================
-# FUNGSI RENDER GRAFIK
-# =========================
-
-def render_chart(fig, chart_key):
-    buffer = io.BytesIO()
-
-    try:
-        fig.savefig(
-            buffer,
-            format="png",
-            dpi=150,
-            bbox_inches="tight",
-            facecolor="white"
-        )
-
-        png_bytes = buffer.getvalue()
-
-        buffer.seek(0)
-        with Image.open(buffer) as image:
-            image.verify()
-
-        st.write("Ukuran file PNG:", len(png_bytes), "bytes")
-        st.image(png_bytes)
-
-        st.download_button(
-            "Unduh grafik untuk tes",
-            data=png_bytes,
-            file_name=f"{chart_key}.png",
-            mime="image/png",
-            key=f"download_{chart_key}"
-        )
-
-    except Exception as e:
-        st.exception(e)
-
-    finally:
-        buffer.close()
-        plt.close(fig)
 
 # =========================
 # LOAD DATA
 # =========================
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR.parent / "data"
+@st.cache_data
+def load_data():
+    file_path = DATA_DIR / "hour.csv"
 
-hour_path = DATA_DIR / "hour.csv"
-day_path = DATA_DIR / "day.csv"
+    if not file_path.exists():
+        raise FileNotFoundError(
+            f"File dataset tidak ditemukan: {file_path}"
+        )
 
-if not hour_path.exists():
-    st.error(f"File data tidak ditemukan: {hour_path}")
+    df = pd.read_csv(file_path)
+
+    df["dteday"] = pd.to_datetime(df["dteday"], errors="coerce")
+
+    # Nama hari untuk tampilan grafik
+    day_names = {
+        0: "Minggu",
+        1: "Senin",
+        2: "Selasa",
+        3: "Rabu",
+        4: "Kamis",
+        5: "Jumat",
+        6: "Sabtu",
+    }
+
+    if "weekday" in df.columns:
+        df["nama_hari"] = df["weekday"].map(day_names)
+
+    return df
+
+
+try:
+    df = load_data()
+except Exception as error:
+    st.error(f"Gagal memuat dataset: {error}")
     st.stop()
 
-if not day_path.exists():
-    st.error(f"File data tidak ditemukan: {day_path}")
-    st.stop()
-
-hour_df = pd.read_csv(hour_path)
-day_df = pd.read_csv(day_path)
-
-hour_df["dteday"] = pd.to_datetime(hour_df["dteday"])
-day_df["dteday"] = pd.to_datetime(day_df["dteday"])
-
 
 # =========================
-# LABEL MUSIM DAN CUACA
+# SIDEBAR FILTER
 # =========================
-season_labels = {
-    1: "Musim semi",
-    2: "Musim panas",
-    3: "Musim gugur",
-    4: "Musim dingin"
-}
+st.sidebar.title("🔎 Filter Data")
 
-weather_labels = {
-    1: "Cerah",
-    2: "Berawan",
-    3: "Hujan ringan",
-    4: "Cuaca ekstrem"
-}
+min_date = df["dteday"].min().date()
+max_date = df["dteday"].max().date()
 
+date_range = st.sidebar.date_input(
+    "Rentang tanggal",
+    value=(min_date, max_date),
+    min_value=min_date,
+    max_value=max_date,
+)
 
-# =========================
-# SIDEBAR: LOGO DAN FILTER
-# =========================
-with st.sidebar:
-    st.markdown(
-        f"""
-        <div style="text-align:center; padding:12px 0 18px 0;">
-            <div style="
-                background-color:{SECONDARY_COLOR};
-                border-radius:18px;
-                width:90px;
-                height:90px;
-                margin:auto;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:48px;">
-                🚲
-            </div>
-            <h2 style="margin-bottom:0; color:{PRIMARY_COLOR};">
-                Pedal Insights
-            </h2>
-            <p style="font-size:13px; color:gray;">
-                Bike Sharing Analytics
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.divider()
-    st.subheader("Filter Data")
-
-    min_date = hour_df["dteday"].min().date()
-    max_date = hour_df["dteday"].max().date()
-
-    selected_dates = st.date_input(
-        "Rentang Waktu",
-        min_value=min_date,
-        max_value=max_date,
-        value=(min_date, max_date)
-    )
-
-    st.caption("Pilih periode untuk memperbarui analisis.")
-
-
-# =========================
-# MENANGANI PILIHAN TANGGAL
-# =========================
-if isinstance(selected_dates, (tuple, list)):
-    if len(selected_dates) == 2:
-        start_date, end_date = selected_dates
-    elif len(selected_dates) == 1:
-        start_date = end_date = selected_dates[0]
-    else:
-        start_date, end_date = min_date, max_date
+if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
+    start_date, end_date = date_range
 else:
-    start_date = end_date = selected_dates
+    start_date = date_range[0] if isinstance(date_range, (tuple, list)) else date_range
+    end_date = start_date
 
+available_hours = sorted(df["hr"].dropna().unique().astype(int))
+
+selected_hours = st.sidebar.slider(
+    "Rentang jam",
+    min_value=int(min(available_hours)),
+    max_value=int(max(available_hours)),
+    value=(int(min(available_hours)), int(max(available_hours))),
+)
 
 # =========================
 # FILTER DATA
 # =========================
-main_df = hour_df[
-    (hour_df["dteday"].dt.date >= start_date)
-    & (hour_df["dteday"].dt.date <= end_date)
+filtered_df = df[
+    (df["dteday"].dt.date >= start_date)
+    & (df["dteday"].dt.date <= end_date)
+    & (df["hr"] >= selected_hours[0])
+    & (df["hr"] <= selected_hours[1])
 ].copy()
 
-
 # =========================
-# HEADER DASHBOARD
+# JUDUL DASHBOARD
 # =========================
-st.title("Bike Sharing Dashboard")
-
-st.write(
-    "Dashboard untuk memahami pola penyewaan sepeda "
-    "berdasarkan jam, musim, dan kondisi cuaca."
-)
-
-st.caption(
-    f"Periode analisis: {start_date.strftime('%d %b %Y')} "
-    f"- {end_date.strftime('%d %b %Y')}"
+st.title("🚲 Bike Sharing Dashboard")
+st.markdown(
+    "Dashboard interaktif untuk menganalisis pola penggunaan "
+    "layanan penyewaan sepeda berdasarkan waktu."
 )
 
 st.divider()
 
+if filtered_df.empty:
+    st.warning("Tidak ada data untuk filter yang dipilih.")
+    st.stop()
 
-if main_df.empty:
-    st.warning("Tidak ada data pada rentang tanggal yang dipilih.")
+# =========================
+# METRIK UTAMA
+# =========================
+total_rentals = int(filtered_df["cnt"].sum())
+average_rentals = filtered_df["cnt"].mean()
+registered_total = int(filtered_df["registered"].sum())
+casual_total = int(filtered_df["casual"].sum())
 
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("Total Penyewaan", f"{total_rentals:,}")
+col2.metric("Rata-rata per Jam", f"{average_rentals:,.1f}")
+col3.metric("Penyewa Terdaftar", f"{registered_total:,}")
+col4.metric("Penyewa Kasual", f"{casual_total:,}")
+
+st.divider()
+
+# =========================
+# GRAFIK 1: PENYEWAAN PER JAM
+# =========================
+st.subheader("📈 Tren Penyewaan Sepeda per Jam")
+
+hourly_data = (
+    filtered_df.groupby("hr", as_index=False)["cnt"]
+    .mean()
+    .sort_values("hr")
+    .set_index("hr")
+)
+
+hourly_data.index.name = "Jam"
+hourly_data = hourly_data.rename(
+    columns={"cnt": "Rata-rata Penyewaan"}
+)
+
+st.line_chart(hourly_data, width="stretch")
+
+# =========================
+# GRAFIK 2: PENYEWAAN PER HARI
+# =========================
+st.subheader("📊 Rata-rata Penyewaan berdasarkan Hari")
+
+if "nama_hari" in filtered_df.columns:
+    weekday_data = (
+        filtered_df.groupby("nama_hari")["cnt"]
+        .mean()
+        .reindex(
+            ["Minggu", "Senin", "Selasa", "Rabu",
+             "Kamis", "Jumat", "Sabtu"]
+        )
+        .dropna()
+    )
+
+    weekday_chart = weekday_data.to_frame(
+        name="Rata-rata Penyewaan"
+    )
+
+    st.bar_chart(weekday_chart, width="stretch")
 else:
-    # =========================
-    # RINGKASAN PENYEWAAN
-    # =========================
-    st.subheader("Ringkasan Penyewaan")
+    st.info("Kolom weekday tidak tersedia pada dataset.")
 
-    total_rentals = main_df["cnt"].sum()
-    average_rentals = main_df["cnt"].mean()
+# =========================
+# GRAFIK 3: PENYEWAAN PER BULAN
+# =========================
+st.subheader("📅 Total Penyewaan berdasarkan Bulan")
 
-    hourly_avg_summary = main_df.groupby("hr")["cnt"].mean()
-    peak_hour = int(hourly_avg_summary.idxmax())
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            label="Total Penyewaan",
-            value=f"{total_rentals:,.0f}"
-        )
-
-    with col2:
-        st.metric(
-            label="Rata-rata Penyewaan per Jam",
-            value=f"{average_rentals:,.1f}"
-        )
-
-    with col3:
-        st.metric(
-            label="Jam dengan Rata-rata Tertinggi",
-            value=f"{peak_hour:02d}:00"
-        )
-
-    st.divider()
-
-
-    # =========================
-    # GRAFIK 1: POLA PER JAM
-    # =========================
-    st.subheader("Pola Penyewaan Berdasarkan Jam")
-
-    hourly_avg = (
-        main_df.groupby("hr", as_index=False)["cnt"]
-        .mean()
-        .sort_values("hr")
+if "mnth" in filtered_df.columns:
+    monthly_data = (
+        filtered_df.groupby("mnth", as_index=False)["cnt"]
+        .sum()
+        .sort_values("mnth")
+        .set_index("mnth")
     )
 
-    fig, ax = plt.subplots(figsize=(12, 4.5))
-
-    ax.plot(
-        hourly_avg["hr"],
-        hourly_avg["cnt"],
-        color=PRIMARY_COLOR,
-        linewidth=2.5,
-        marker="o",
-        markersize=4
+    monthly_data.index.name = "Bulan"
+    monthly_data = monthly_data.rename(
+        columns={"cnt": "Total Penyewaan"}
     )
 
-    ax.fill_between(
-        hourly_avg["hr"],
-        hourly_avg["cnt"],
-        color=SECONDARY_COLOR,
-        alpha=0.75
+    st.bar_chart(monthly_data, width="stretch")
+else:
+    st.info("Kolom mnth tidak tersedia pada dataset.")
+
+# =========================
+# TABEL DATA
+# =========================
+st.divider()
+st.subheader("📋 Data Penyewaan Sepeda")
+
+show_data = st.checkbox("Tampilkan data hasil filter", value=True)
+
+if show_data:
+    preferred_columns = [
+        "dteday",
+        "hr",
+        "nama_hari",
+        "casual",
+        "registered",
+        "cnt",
+    ]
+
+    display_columns = [
+        column for column in preferred_columns
+        if column in filtered_df.columns
+    ]
+
+    st.dataframe(
+        filtered_df[display_columns],
+        width="stretch",
+        hide_index=True,
     )
-
-    ax.set_xlabel("Jam")
-    ax.set_ylabel("Rata-rata Penyewaan")
-    ax.set_xticks(range(24))
-    ax.set_xticklabels(
-        [f"{hour:02d}:00" for hour in range(24)],
-        rotation=45,
-        ha="right",
-        fontsize=9
-    )
-
-    ax.grid(axis="y", alpha=0.25)
-    ax.grid(axis="x", visible=False)
-    ax.margins(y=0.15)
-
-    sns.despine(ax=ax)
-    fig.tight_layout()
-
-    render_chart(fig, "grafik_jam")
-
-    st.divider()
-
-
-    # =========================
-    # SIAPKAN DATA MUSIM
-    # =========================
-    col1, col2 = st.columns(2)
-
-    season_avg = (
-        main_df.groupby("season", as_index=False)["cnt"]
-        .mean()
-        .sort_values("season")
-    )
-
-    season_avg["Musim"] = season_avg["season"].map(season_labels)
-
-
-    # =========================
-    # GRAFIK 2: MUSIM
-    # =========================
-    with col1:
-        st.subheader("Penyewaan Berdasarkan Musim")
-
-        fig, ax = plt.subplots(figsize=(6, 4.5))
-
-        sns.barplot(
-            data=season_avg,
-            x="Musim",
-            y="cnt",
-            color=PRIMARY_COLOR,
-            ax=ax
-        )
-
-        ax.set_xlabel("")
-        ax.set_ylabel("Rata-rata Penyewaan")
-        ax.tick_params(axis="x", rotation=0, labelsize=9)
-
-        ax.grid(axis="y", alpha=0.25)
-        ax.grid(axis="x", visible=False)
-        ax.set_axisbelow(True)
-
-        sns.despine(ax=ax)
-        fig.tight_layout()
-
-        render_chart(fig, "grafik_musim")
-
-
-    # =========================
-    # SIAPKAN DATA CUACA
-    # =========================
-    weather_avg = (
-        main_df.groupby("weathersit", as_index=False)["cnt"]
-        .mean()
-    )
-
-    weather_avg["Kondisi Cuaca"] = (
-        weather_avg["weathersit"].map(weather_labels)
-    )
-
-    weather_avg = weather_avg.sort_values("cnt", ascending=True)
-
-
-    # =========================
-    # GRAFIK 3: KONDISI CUACA
-    # =========================
-    with col2:
-        st.subheader("Penyewaan Berdasarkan Cuaca")
-
-        fig, ax = plt.subplots(figsize=(6, 4.5))
-
-        sns.barplot(
-            data=weather_avg,
-            x="cnt",
-            y="Kondisi Cuaca",
-            color=PRIMARY_COLOR,
-            ax=ax
-        )
-
-        ax.set_xlabel("Rata-rata Penyewaan")
-        ax.set_ylabel("")
-        ax.tick_params(axis="y", rotation=0, labelsize=9)
-
-        ax.grid(axis="x", alpha=0.25)
-        ax.grid(axis="y", visible=False)
-        ax.set_axisbelow(True)
-
-        for container in ax.containers:
-            ax.bar_label(
-                container,
-                fmt="%.0f",
-                padding=4,
-                fontsize=9
-            )
-
-        ax.margins(x=0.18)
-
-        sns.despine(ax=ax)
-        fig.tight_layout()
-
-        render_chart(fig, "grafik_cuaca")
-
-    st.divider()
-
-
-    # =========================
-    # TABEL DATA PENYEWAAN
-    # =========================
-    st.subheader("Data Penyewaan Sepeda")
-
-    with st.expander("Lihat data penyewaan"):
-        display_df = main_df[
-            [
-                "dteday",
-                "hr",
-                "season",
-                "weathersit",
-                "casual",
-                "registered",
-                "cnt"
-            ]
-        ].copy()
-
-        display_df["season"] = (
-            display_df["season"].map(season_labels)
-        )
-
-        display_df["weathersit"] = (
-            display_df["weathersit"].map(weather_labels)
-        )
-
-        display_df.columns = [
-            "Tanggal",
-            "Jam",
-            "Musim",
-            "Kondisi Cuaca",
-            "Penyewa Kasual",
-            "Penyewa Terdaftar",
-            "Total Penyewaan"
-        ]
-
-        display_df["Tanggal"] = (
-            display_df["Tanggal"].dt.strftime("%Y-%m-%d")
-        )
-
-        st.dataframe(
-            display_df,
-            width="stretch",
-            hide_index=True
-        )
 
     st.caption(
-        "Sumber: Bike Sharing Dataset, "
-        "Capital Bikeshare, 2011–2012."
+        f"Menampilkan {len(filtered_df):,} baris data."
+    )
+
+    csv_data = filtered_df[display_columns].to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download data CSV",
+        data=csv_data,
+        file_name="bike_sharing_filtered.csv",
+        mime="text/csv",
+        key="download_filtered_data",
     )
