@@ -37,12 +37,14 @@ plt.rcParams.update({
 # =========================
 # FUNGSI RENDER GRAFIK
 # =========================
-
 def render_chart(fig):
-    """Tampilkan grafik Matplotlib langsung di Streamlit."""
+    st.write("DEBUG: fungsi grafik terpanggil")
+
     try:
-        fig.tight_layout()
-        st.pyplot(fig, clear_figure=False, use_container_width=True)
+        st.pyplot(fig)
+        st.success("DEBUG: grafik berhasil dikirim ke Streamlit")
+    except Exception as e:
+        st.exception(e)
     finally:
         plt.close(fig)
 
