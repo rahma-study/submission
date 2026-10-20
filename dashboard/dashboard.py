@@ -233,6 +233,8 @@ else:
     fig.tight_layout()
 
     st.pyplot(fig, width="stretch")
+    st.write("DEBUG: Grafik 1 berhasil dibuat")
+    st.image(fig, caption="Tes hasil render Matplotlib")
     plt.close(fig)
 
     st.divider()
@@ -281,6 +283,8 @@ else:
         fig.tight_layout()
 
         st.pyplot(fig, width="stretch")
+        st.write("DEBUG: Grafik 1 berhasil dibuat")
+        st.image(fig, caption="Tes hasil render Matplotlib")
         plt.close(fig)
 
     # =========================
@@ -341,6 +345,8 @@ else:
         fig.tight_layout()
 
         st.pyplot(fig, width="stretch")
+        st.write("DEBUG: Grafik 1 berhasil dibuat")
+        st.image(fig, caption="Tes hasil render Matplotlib")
         plt.close(fig)
 
     st.divider()
