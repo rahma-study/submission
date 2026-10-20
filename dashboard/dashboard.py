@@ -1,4 +1,6 @@
 from pathlib import Path
+from PIL import Image
+import io
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -38,11 +40,22 @@ plt.rcParams.update({
 # FUNGSI RENDER GRAFIK
 # =========================
 def render_chart(fig):
-    st.write("DEBUG: fungsi grafik terpanggil")
-
     try:
-        st.pyplot(fig)
-        st.success("DEBUG: grafik berhasil dikirim ke Streamlit")
+        buffer = io.BytesIO()
+        fig.savefig(
+            buffer,
+            format="png",
+            dpi=150,
+            bbox_inches="tight",
+            facecolor="white"
+        )
+        buffer.seek(0)
+
+        image = Image.open(buffer).convert("RGB")
+        st.write("Ukuran PNG:", image.size)
+        st.image(image)
+
+        buffer.close()
     except Exception as e:
         st.exception(e)
     finally:
