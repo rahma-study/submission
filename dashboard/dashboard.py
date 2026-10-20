@@ -4,6 +4,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
+st.write("DEBUG: dashboard.py berjalan")
+st.write("Streamlit:", st.__version__)
 from pathlib import Path
 
 # =========================
