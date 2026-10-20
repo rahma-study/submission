@@ -203,9 +203,15 @@ st.divider()
 # =========================
 st.subheader("Pola Penyewaan Berdasarkan Jam")
 
-hourly_chart = hourly_avg.rename(
-    columns={"hr": "Jam", "cnt": "Rata-rata Penyewaan"}
-).copy()
+
+hourly_chart = (
+    hourly_avg.rename(
+        columns={
+            "hr": "Jam",
+            "cnt": "Rata-rata Penyewaan"
+        }
+    )
+)
 
 hourly_chart["Jam"] = hourly_chart["Jam"].map(
     lambda h: f"{int(h):02d}:00"
