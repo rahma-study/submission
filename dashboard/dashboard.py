@@ -228,7 +228,7 @@ else:
     sns.despine(ax=ax)
     fig.tight_layout()
 
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
     st.divider()
@@ -276,7 +276,7 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
 
     # =========================
@@ -336,7 +336,7 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
         plt.close(fig)
 
     st.divider()
