@@ -1,12 +1,14 @@
+
+import io
+from pathlib import Path
+
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
-st.write("DEBUG: dashboard.py berjalan")
-st.write("Streamlit:", st.__version__)
-from pathlib import Path
+
 
 # =========================
 # KONFIGURASI DASHBOARD
@@ -34,17 +36,51 @@ plt.rcParams.update({
     "axes.edgecolor": "#D9E2DE"
 })
 
+
+# =========================
+# FUNGSI RENDER GRAFIK
+# =========================
+def render_chart(fig):
+    """Ubah Matplotlib Figure menjadi PNG lalu tampilkan."""
+    buffer = io.BytesIO()
+    fig.savefig(
+        buffer,
+        format="png",
+        dpi=150,
+        bbox_inches="tight",
+        facecolor="white"
+    )
+    buffer.seek(0)
+
+    st.image(buffer.getvalue(), width="stretch")
+
+    plt.close(fig)
+    buffer.close()
+
+
 # =========================
 # LOAD DATA
 # =========================
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR.parent / "data"
 
-hour_df = pd.read_csv(DATA_DIR / "hour.csv")
-day_df = pd.read_csv(DATA_DIR / "day.csv")
+hour_path = DATA_DIR / "hour.csv"
+day_path = DATA_DIR / "day.csv"
+
+if not hour_path.exists():
+    st.error(f"File data tidak ditemukan: {hour_path}")
+    st.stop()
+
+if not day_path.exists():
+    st.error(f"File data tidak ditemukan: {day_path}")
+    st.stop()
+
+hour_df = pd.read_csv(hour_path)
+day_df = pd.read_csv(day_path)
 
 hour_df["dteday"] = pd.to_datetime(hour_df["dteday"])
 day_df["dteday"] = pd.to_datetime(day_df["dteday"])
+
 
 # =========================
 # LABEL MUSIM DAN CUACA
@@ -62,6 +98,7 @@ weather_labels = {
     3: "Hujan ringan",
     4: "Cuaca ekstrem"
 }
+
 
 # =========================
 # SIDEBAR: LOGO DAN FILTER
@@ -108,6 +145,7 @@ with st.sidebar:
 
     st.caption("Pilih periode untuk memperbarui analisis.")
 
+
 # =========================
 # MENANGANI PILIHAN TANGGAL
 # =========================
@@ -121,6 +159,7 @@ if isinstance(selected_dates, (tuple, list)):
 else:
     start_date = end_date = selected_dates
 
+
 # =========================
 # FILTER DATA
 # =========================
@@ -128,6 +167,7 @@ main_df = hour_df[
     (hour_df["dteday"].dt.date >= start_date)
     & (hour_df["dteday"].dt.date <= end_date)
 ].copy()
+
 
 # =========================
 # HEADER DASHBOARD
@@ -146,10 +186,9 @@ st.caption(
 
 st.divider()
 
+
 if main_df.empty:
-    st.warning(
-        "Tidak ada data pada rentang tanggal yang dipilih."
-    )
+    st.warning("Tidak ada data pada rentang tanggal yang dipilih.")
 
 else:
     # =========================
@@ -160,10 +199,8 @@ else:
     total_rentals = main_df["cnt"].sum()
     average_rentals = main_df["cnt"].mean()
 
-    hourly_avg = (
-        main_df.groupby("hr")["cnt"].mean()
-    )
-    peak_hour = int(hourly_avg.idxmax())
+    hourly_avg_summary = main_df.groupby("hr")["cnt"].mean()
+    peak_hour = int(hourly_avg_summary.idxmax())
 
     col1, col2, col3 = st.columns(3)
 
@@ -187,6 +224,7 @@ else:
 
     st.divider()
 
+
     # =========================
     # GRAFIK 1: POLA PER JAM
     # =========================
@@ -195,6 +233,7 @@ else:
     hourly_avg = (
         main_df.groupby("hr", as_index=False)["cnt"]
         .mean()
+        .sort_values("hr")
     )
 
     fig, ax = plt.subplots(figsize=(12, 4.5))
@@ -232,28 +271,28 @@ else:
     sns.despine(ax=ax)
     fig.tight_layout()
 
-    st.pyplot(fig, width="stretch")
-    st.write("DEBUG: Grafik 1 berhasil dibuat")
-    st.image(fig, caption="Tes hasil render Matplotlib")
-    plt.close(fig)
+    render_chart(fig)
 
     st.divider()
 
+
     # =========================
-    # GRAFIK 2: MUSIM
+    # SIAPKAN DATA MUSIM
     # =========================
     col1, col2 = st.columns(2)
 
     season_avg = (
         main_df.groupby("season", as_index=False)["cnt"]
         .mean()
+        .sort_values("season")
     )
 
-    # Pastikan urutan musim tetap 1 sampai 4
-    season_avg["Musim"] = (
-        season_avg["season"].map(season_labels)
-    )
+    season_avg["Musim"] = season_avg["season"].map(season_labels)
 
+
+    # =========================
+    # GRAFIK 2: MUSIM
+    # =========================
     with col1:
         st.subheader("Penyewaan Berdasarkan Musim")
 
@@ -269,11 +308,7 @@ else:
 
         ax.set_xlabel("")
         ax.set_ylabel("Rata-rata Penyewaan")
-        ax.tick_params(
-            axis="x",
-            rotation=0,
-            labelsize=9
-        )
+        ax.tick_params(axis="x", rotation=0, labelsize=9)
 
         ax.grid(axis="y", alpha=0.25)
         ax.grid(axis="x", visible=False)
@@ -282,13 +317,11 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        st.pyplot(fig, width="stretch")
-        st.write("DEBUG: Grafik 1 berhasil dibuat")
-        st.image(fig, caption="Tes hasil render Matplotlib")
-        plt.close(fig)
+        render_chart(fig)
+
 
     # =========================
-    # GRAFIK 3: KONDISI CUACA
+    # SIAPKAN DATA CUACA
     # =========================
     weather_avg = (
         main_df.groupby("weathersit", as_index=False)["cnt"]
@@ -299,12 +332,12 @@ else:
         weather_avg["weathersit"].map(weather_labels)
     )
 
-    # Urutkan dari rata-rata terendah ke tertinggi
-    weather_avg = weather_avg.sort_values(
-        "cnt",
-        ascending=True
-    )
+    weather_avg = weather_avg.sort_values("cnt", ascending=True)
 
+
+    # =========================
+    # GRAFIK 3: KONDISI CUACA
+    # =========================
     with col2:
         st.subheader("Penyewaan Berdasarkan Cuaca")
 
@@ -320,17 +353,12 @@ else:
 
         ax.set_xlabel("Rata-rata Penyewaan")
         ax.set_ylabel("")
-        ax.tick_params(
-            axis="y",
-            rotation=0,
-            labelsize=9
-        )
+        ax.tick_params(axis="y", rotation=0, labelsize=9)
 
         ax.grid(axis="x", alpha=0.25)
         ax.grid(axis="y", visible=False)
         ax.set_axisbelow(True)
 
-        # Tampilkan nilai di ujung setiap batang
         for container in ax.containers:
             ax.bar_label(
                 container,
@@ -344,12 +372,10 @@ else:
         sns.despine(ax=ax)
         fig.tight_layout()
 
-        st.pyplot(fig, width="stretch")
-        st.write("DEBUG: Grafik 1 berhasil dibuat")
-        st.image(fig, caption="Tes hasil render Matplotlib")
-        plt.close(fig)
+        render_chart(fig)
 
     st.divider()
+
 
     # =========================
     # TABEL DATA PENYEWAAN
