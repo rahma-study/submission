@@ -1,7 +1,4 @@
-
-import io
 from pathlib import Path
-
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -40,23 +37,14 @@ plt.rcParams.update({
 # =========================
 # FUNGSI RENDER GRAFIK
 # =========================
+
 def render_chart(fig):
-    """Ubah Matplotlib Figure menjadi PNG lalu tampilkan."""
-    buffer = io.BytesIO()
-    fig.savefig(
-        buffer,
-        format="png",
-        dpi=150,
-        bbox_inches="tight",
-        facecolor="white"
-    )
-    buffer.seek(0)
-
-    st.image(buffer.getvalue(), width="stretch")
-
-    plt.close(fig)
-    buffer.close()
-
+    """Tampilkan grafik Matplotlib langsung di Streamlit."""
+    try:
+        fig.tight_layout()
+        st.pyplot(fig, clear_figure=False, use_container_width=True)
+    finally:
+        plt.close(fig)
 
 # =========================
 # LOAD DATA
