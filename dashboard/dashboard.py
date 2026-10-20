@@ -14,7 +14,6 @@ st.set_page_config(
 PRIMARY_COLOR = "#23856D"
 SECONDARY_COLOR = "#DCEFE8"
 
-
 # =========================
 # LOAD DATA
 # =========================
@@ -27,14 +26,10 @@ def load_data():
     day_path = BASE_DIR / "day_clean.csv"
 
     if not hour_path.exists():
-        raise FileNotFoundError(
-            f"File tidak ditemukan: {hour_path}"
-        )
+        raise FileNotFoundError(f"File tidak ditemukan: {hour_path}")
 
     if not day_path.exists():
-        raise FileNotFoundError(
-            f"File tidak ditemukan: {day_path}"
-        )
+        raise FileNotFoundError(f"File tidak ditemukan: {day_path}")
 
     hourly = pd.read_csv(hour_path)
     daily = pd.read_csv(day_path)
@@ -53,7 +48,7 @@ except Exception as e:
     st.stop()
 
 # =========================
-# LABEL MUSIM DAN CUACA
+# LABEL KATEGORI
 # =========================
 season_labels = {
     1: "Musim semi",
@@ -70,7 +65,7 @@ weather_labels = {
 }
 
 # =========================
-# SIDEBAR: LOGO DAN FILTER
+# SIDEBAR DAN FILTER
 # =========================
 with st.sidebar:
     st.markdown(
@@ -112,10 +107,10 @@ with st.sidebar:
         value=(min_date, max_date)
     )
 
-    st.caption("Pilih periode untuk memperbarui analisis.")
+    st.caption("Pilih periode untuk memperbarui hasil analisis.")
 
 # =========================
-# MENANGANI PILIHAN TANGGAL
+# MENANGANI RENTANG TANGGAL
 # =========================
 if isinstance(selected_dates, (tuple, list)):
     if len(selected_dates) == 2:
@@ -128,21 +123,26 @@ else:
     start_date = end_date = selected_dates
 
 # =========================
-# FILTER DATA
+# FILTER DATA PER JAM DAN PER HARI
 # =========================
-main_df = hour_df[
+hour_filtered = hour_df[
     (hour_df["dteday"].dt.date >= start_date)
     & (hour_df["dteday"].dt.date <= end_date)
 ].copy()
 
+day_filtered = day_df[
+    (day_df["dteday"].dt.date >= start_date)
+    & (day_df["dteday"].dt.date <= end_date)
+].copy()
+
 # =========================
-# HEADER DASHBOARD
+# JUDUL DASHBOARD
 # =========================
 st.title("🚲 Bike Sharing Dashboard")
 
 st.write(
-    "Dashboard untuk memahami pola penyewaan sepeda "
-    "berdasarkan jam, musim, dan kondisi cuaca."
+    "Dashboard analisis pola penyewaan sepeda berdasarkan jam "
+    "dan musim pada periode 2011–2012."
 )
 
 st.caption(
@@ -152,65 +152,81 @@ st.caption(
 
 st.divider()
 
-if main_df.empty:
+if hour_filtered.empty or day_filtered.empty:
     st.warning(
-        "Tidak ada data pada rentang tanggal yang dipilih."
+        "Data tidak tersedia untuk rentang tanggal yang dipilih."
     )
     st.stop()
+
+# =========================
+# PERHITUNGAN RINGKASAN
+# =========================
+hourly_avg = (
+    hour_filtered.groupby("hr", as_index=False)["cnt"]
+    .mean()
+    .rename(columns={"cnt": "avg_rentals"})
+)
+
+peak_row = hourly_avg.loc[hourly_avg["avg_rentals"].idxmax()]
+peak_hour = int(peak_row["hr"])
+peak_rentals = peak_row["avg_rentals"]
+
+season_avg = (
+    day_filtered.groupby("season", as_index=False)["cnt"]
+    .mean()
+    .rename(columns={"cnt": "avg_daily_rentals"})
+)
+
+season_avg["Musim"] = season_avg["season"].map(season_labels)
+
+best_season = season_avg.loc[
+    season_avg["avg_daily_rentals"].idxmax()
+]
 
 # =========================
 # RINGKASAN PENYEWAAN
 # =========================
 st.subheader("Ringkasan Penyewaan")
 
-total_rentals = main_df["cnt"].sum()
-average_rentals = main_df["cnt"].mean()
-
-hourly_avg = (
-    main_df.groupby("hr", as_index=False)["cnt"]
-    .mean()
-)
-
-peak_hour = int(
-    hourly_avg.loc[hourly_avg["cnt"].idxmax(), "hr"]
-)
-
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric(
-        label="Total Penyewaan",
-        value=f"{total_rentals:,.0f}"
+        "Total Penyewaan",
+        f"{hour_filtered['cnt'].sum():,.0f}"
     )
 
 with col2:
     st.metric(
-        label="Rata-rata Penyewaan per Jam",
-        value=f"{average_rentals:,.1f}"
+        "Jam Puncak Penyewaan",
+        f"{peak_hour:02d}:00",
+        f"{peak_rentals:,.2f} penyewaan/jam"
     )
 
 with col3:
     st.metric(
-        label="Jam dengan Rata-rata Tertinggi",
-        value=f"{peak_hour:02d}:00"
+        "Musim dengan Rata-rata Tertinggi",
+        best_season["Musim"],
+        f"{best_season['avg_daily_rentals']:,.2f} penyewaan/hari"
     )
 
 st.divider()
 
 # =========================
-# GRAFIK 1: POLA PER JAM
+# VISUALISASI 1: PENYEWAAN PER JAM
 # =========================
-st.subheader("Pola Penyewaan Berdasarkan Jam")
+st.subheader("1. Rata-rata Penyewaan Sepeda Berdasarkan Jam")
 
-
-hourly_chart = (
-    hourly_avg.rename(
-        columns={
-            "hr": "Jam",
-            "cnt": "Rata-rata Penyewaan"
-        }
-    )
+st.write(
+    "Pola rata-rata penyewaan sepeda pada setiap jam dalam sehari."
 )
+
+hourly_chart = hourly_avg.rename(
+    columns={
+        "hr": "Jam",
+        "avg_rentals": "Rata-rata Penyewaan"
+    }
+).copy()
 
 hourly_chart["Jam"] = hourly_chart["Jam"].map(
     lambda h: f"{int(h):02d}:00"
@@ -220,30 +236,29 @@ st.line_chart(
     hourly_chart,
     x="Jam",
     y="Rata-rata Penyewaan",
-    x_label="Jam",
-    y_label="Rata-rata Penyewaan",
+    x_label="Jam dalam sehari",
+    y_label="Rata-rata penyewaan per jam",
     color=PRIMARY_COLOR,
     height=380
 )
 
-st.caption(
-    f"Puncak rata-rata penyewaan pada periode terpilih: "
-    f"{peak_hour:02d}:00."
+st.info(
+    f"Rata-rata penyewaan tertinggi terjadi pada pukul "
+    f"{peak_hour:02d}:00, yaitu {peak_rentals:,.2f} "
+    f"penyewaan per jam."
 )
 
 st.divider()
 
 # =========================
-# GRAFIK 2: PENYEWAAN BERDASARKAN MUSIM
+# VISUALISASI 2: PENYEWAAN PER MUSIM
 # =========================
-col1, col2 = st.columns(2)
+st.subheader("2. Rata-rata Penyewaan Harian Berdasarkan Musim")
 
-season_avg = (
-    main_df.groupby("season", as_index=False)["cnt"]
-    .mean()
+st.write(
+    "Perbandingan rata-rata jumlah sepeda yang disewa per hari "
+    "pada setiap musim."
 )
-
-season_avg["Musim"] = season_avg["season"].map(season_labels)
 
 season_order = [
     "Musim semi",
@@ -253,76 +268,91 @@ season_order = [
 ]
 
 season_chart = (
-    season_avg[["Musim", "cnt"]]
-    .rename(columns={"cnt": "Rata-rata Penyewaan"})
+    season_avg[["Musim", "avg_daily_rentals"]]
+    .rename(
+        columns={
+            "avg_daily_rentals": "Rata-rata Penyewaan Harian"
+        }
+    )
     .set_index("Musim")
     .reindex(season_order)
     .dropna()
 )
 
-with col1:
-    st.subheader("Penyewaan Berdasarkan Musim")
+st.bar_chart(
+    season_chart,
+    color=PRIMARY_COLOR,
+    height=350,
+    y_label="Rata-rata penyewaan per hari"
+)
 
-    st.bar_chart(
-        season_chart,
-        color=PRIMARY_COLOR,
-        height=350,
-        y_label="Rata-rata Penyewaan"
+st.info(
+    f"Rata-rata penyewaan harian tertinggi terjadi pada "
+    f"{best_season['Musim'].lower()}, yaitu "
+    f"{best_season['avg_daily_rentals']:,.2f} penyewaan per hari."
+)
+
+# =========================
+# TABEL RINCIAN MUSIM
+# =========================
+with st.expander("Lihat rincian rata-rata penyewaan per musim"):
+    season_table = season_avg[
+        ["Musim", "avg_daily_rentals"]
+    ].rename(
+        columns={
+            "avg_daily_rentals": "Rata-rata Penyewaan per Hari"
+        }
     )
 
-    if not season_avg.empty:
-        best_season = season_avg.loc[season_avg["cnt"].idxmax()]
-        st.caption(
-            f"Rata-rata tertinggi: {best_season['Musim']} "
-            f"({best_season['cnt']:,.1f} penyewaan)."
+    season_table["Rata-rata Penyewaan per Hari"] = (
+        season_table["Rata-rata Penyewaan per Hari"].round(2)
+    )
+
+    st.dataframe(
+        season_table,
+        use_container_width=True,
+        hide_index=True
+    )
+
+st.divider()
+
+# =========================
+# ANALISIS TAMBAHAN: CUACA
+# =========================
+with st.expander("Analisis tambahan: Penyewaan berdasarkan cuaca"):
+    weather_avg = (
+        hour_filtered.groupby("weathersit", as_index=False)["cnt"]
+        .mean()
+        .rename(columns={"cnt": "avg_rentals"})
+    )
+
+    weather_avg["Kondisi Cuaca"] = (
+        weather_avg["weathersit"].map(weather_labels)
+    )
+
+    weather_chart = (
+        weather_avg[["Kondisi Cuaca", "avg_rentals"]]
+        .rename(
+            columns={"avg_rentals": "Rata-rata Penyewaan"}
         )
-
-# =========================
-# GRAFIK 3: PENYEWAAN BERDASARKAN CUACA
-# =========================
-weather_avg = (
-    main_df.groupby("weathersit", as_index=False)["cnt"]
-    .mean()
-)
-
-weather_avg["Kondisi Cuaca"] = (
-    weather_avg["weathersit"].map(weather_labels)
-)
-
-weather_chart = (
-    weather_avg[["Kondisi Cuaca", "cnt"]]
-    .rename(columns={"cnt": "Rata-rata Penyewaan"})
-    .set_index("Kondisi Cuaca")
-    .sort_values("Rata-rata Penyewaan")
-)
-
-with col2:
-    st.subheader("Penyewaan Berdasarkan Cuaca")
+        .set_index("Kondisi Cuaca")
+        .sort_values("Rata-rata Penyewaan")
+    )
 
     st.bar_chart(
         weather_chart,
         color=PRIMARY_COLOR,
-        height=350,
-        y_label="Rata-rata Penyewaan"
+        height=320,
+        y_label="Rata-rata penyewaan per jam"
     )
-
-    if not weather_avg.empty:
-        best_weather = weather_avg.loc[weather_avg["cnt"].idxmax()]
-        st.caption(
-            f"Rata-rata tertinggi pada kondisi "
-            f"{best_weather['Kondisi Cuaca']} "
-            f"({best_weather['cnt']:,.1f} penyewaan)."
-        )
-
-st.divider()
 
 # =========================
 # TABEL DATA PENYEWAAN
 # =========================
 st.subheader("Data Penyewaan Sepeda")
 
-with st.expander("Lihat data penyewaan"):
-    display_df = main_df[
+with st.expander("Lihat data penyewaan per jam"):
+    display_df = hour_filtered[
         [
             "dteday",
             "hr",
@@ -349,8 +379,8 @@ with st.expander("Lihat data penyewaan"):
         "Total Penyewaan"
     ]
 
-    display_df["Tanggal"] = (
-        display_df["Tanggal"].dt.strftime("%Y-%m-%d")
+    display_df["Tanggal"] = display_df["Tanggal"].dt.strftime(
+        "%Y-%m-%d"
     )
 
     st.dataframe(
