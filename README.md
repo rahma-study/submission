@@ -2,45 +2,44 @@
 
 ## Deskripsi Proyek
 
-Proyek ini bertujuan menganalisis pola penyewaan sepeda menggunakan _Bike Sharing Dataset_ tahun 2011–2012. Analisis dilakukan untuk memahami waktu dengan permintaan penyewaan tertinggi serta hubungan musim dan kondisi cuaca dengan jumlah penyewaan sepeda.
+Proyek ini bertujuan menganalisis pola penyewaan sepeda menggunakan *Bike Sharing Dataset* tahun 2011–2012. Analisis difokuskan pada identifikasi jam dengan rata-rata penyewaan tertinggi dan musim dengan rata-rata penyewaan harian tertinggi.
 
-Hasil analisis disajikan dalam bentuk visualisasi interaktif menggunakan Streamlit agar pola penyewaan dapat dipahami dengan lebih mudah.
+Hasil analisis disajikan melalui visualisasi data pada notebook dan dashboard interaktif menggunakan Streamlit agar pola penyewaan sepeda dapat dipahami dengan lebih mudah.
 
 ## Business Questions
 
-Analisis ini berfokus pada dua pertanyaan utama:
+Analisis ini berfokus pada dua pertanyaan bisnis utama:
 
-1. Bagaimana rata-rata jumlah penyewaan sepeda berdasarkan jam, dan pada jam berapa permintaan mencapai puncaknya?
-2. Bagaimana rata-rata jumlah penyewaan sepeda berdasarkan musim dan kondisi cuaca, serta kombinasi mana yang memiliki rata-rata penyewaan tertinggi?
+1. Pada periode 2011–2012, pukul berapa rata-rata penyewaan sepeda per jam mencapai nilai tertinggi?
+2. Pada periode 2011–2012, musim apa yang memiliki rata-rata penyewaan sepeda harian tertinggi?
 
 ## Dataset
 
-Dataset yang digunakan adalah _Bike Sharing Dataset_, yang terdiri dari data penyewaan sepeda per jam (`hour.csv`) dan per hari (`day.csv`).
+Dataset yang digunakan adalah *Bike Sharing Dataset*, yang terdiri dari data penyewaan sepeda per jam (`hour.csv`) dan per hari (`day.csv`).
 
-Tahapan analisis meliputi pengumpulan data, pemeriksaan kualitas data, pembersihan data, eksplorasi data, visualisasi, serta penyusunan kesimpulan dan rekomendasi.
+Tahapan analisis meliputi pengumpulan data, pemeriksaan kualitas data, pembersihan data, eksplorasi data, visualisasi, analisis lanjutan, serta penyusunan kesimpulan dan rekomendasi.
 
 ## Hasil Analisis
 
 Berdasarkan hasil eksplorasi data, diperoleh beberapa temuan utama:
 
-- **Jam penyewaan tertinggi:** pukul 17.00, dengan rata-rata 461,45 penyewaan sepeda.
-- **Musim dengan rata-rata penyewaan tertinggi:** musim gugur (_fall_), dengan rata-rata 236,02 penyewaan.
-- **Kondisi cuaca:** cuaca cerah atau sedikit berawan memiliki rata-rata penyewaan tertinggi, yaitu 204,87.
-- **Kombinasi musim dan cuaca:** musim gugur dengan cuaca cerah atau sedikit berawan memiliki rata-rata penyewaan tertinggi, yaitu 244,49.
+- **Jam dengan rata-rata penyewaan tertinggi:** pukul 17.00, dengan rata-rata sekitar 461,45 penyewaan sepeda per jam.
+- **Musim dengan rata-rata penyewaan harian tertinggi:** season 3, dengan rata-rata sekitar 5.644,30 penyewaan sepeda per hari.
+- **Pola permintaan berdasarkan jam:** rata-rata penyewaan cenderung lebih tinggi pada sore hari dan lebih rendah pada dini hari.
 
-Temuan ini menunjukkan bahwa waktu dan kondisi lingkungan perlu dipertimbangkan dalam perencanaan ketersediaan sepeda.
+Temuan tersebut menunjukkan bahwa waktu penyewaan dan pola musiman dapat menjadi pertimbangan dalam perencanaan ketersediaan sepeda.
 
 ## Kesimpulan dan Rekomendasi
 
-Penyewaan sepeda cenderung mencapai puncaknya pada sore hari, terutama pukul 17.00–18.00. Rata-rata penyewaan juga berbeda berdasarkan musim dan kondisi cuaca.
+Analisis menunjukkan bahwa rata-rata penyewaan sepeda per jam mencapai nilai tertinggi pada pukul 17.00. Sementara itu, berdasarkan rata-rata penyewaan harian, season 3 memiliki nilai tertinggi dibandingkan musim lainnya.
 
-Berdasarkan temuan tersebut, pengelola layanan sepeda disarankan untuk menyesuaikan ketersediaan sepeda dengan jam permintaan tinggi serta mempertimbangkan pola musiman dan kondisi cuaca dalam perencanaan operasional.
+Berdasarkan temuan tersebut, pengelola layanan sepeda disarankan untuk memperhatikan ketersediaan sepeda pada jam-jam dengan permintaan tinggi serta mempertimbangkan perbedaan pola penyewaan antar musim dalam perencanaan operasional.
 
 ## Instalasi dan Cara Menjalankan
 
 Pastikan Python sudah terpasang di komputer.
 
-1. Instal library yang diperlukan dengan menjalankan perintah berikut di terminal:
+1. Instal library yang diperlukan melalui terminal:
 
    ```bash
    pip install -r requirements.txt
@@ -52,18 +51,18 @@ Pastikan Python sudah terpasang di komputer.
    streamlit run dashboard/dashboard.py
    ```
 
-3. Dashboard akan terbuka melalui browser. Jika tidak terbuka otomatis, ikuti alamat lokal yang ditampilkan di terminal.
+3. Dashboard akan terbuka melalui browser. Jika tidak terbuka otomatis, akses alamat lokal yang ditampilkan di terminal.
 
 ## Teknologi yang Digunakan
 
-- **Python** — bahasa pemrograman yang digunakan dalam proses analisis data.
-- **Pandas** — digunakan untuk membaca, membersihkan, dan mengolah dataset.
-- **NumPy** — mendukung operasi numerik dalam analisis data.
-- **Matplotlib dan Seaborn** — digunakan untuk membuat visualisasi data pada notebook.
-- **Streamlit** — digunakan untuk membangun dashboard interaktif yang menampilkan hasil analisis.
+- **Python** — bahasa pemrograman untuk proses analisis data.
+- **Pandas** — untuk membaca, membersihkan, dan mengolah dataset.
+- **NumPy** — untuk mendukung operasi numerik.
+- **Matplotlib dan Seaborn** — untuk membuat visualisasi data pada notebook.
+- **Streamlit** — untuk membangun dashboard interaktif.
 
 ## Dashboard
 
-Dashboard menampilkan ringkasan data penyewaan sepeda, visualisasi rata-rata penyewaan berdasarkan jam, serta analisis berdasarkan musim dan kondisi cuaca.
+Dashboard menampilkan ringkasan data penyewaan sepeda dan visualisasi yang mendukung kedua pertanyaan bisnis, yaitu rata-rata penyewaan sepeda berdasarkan jam serta rata-rata penyewaan sepeda harian berdasarkan musim.
 
 Jika dashboard telah di-deploy, tautan akses dapat dicantumkan di file `url.txt`.
