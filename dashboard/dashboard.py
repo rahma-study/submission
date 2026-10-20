@@ -39,9 +39,11 @@ plt.rcParams.update({
 # =========================
 # FUNGSI RENDER GRAFIK
 # =========================
+
 def render_chart(fig):
     try:
         buffer = io.BytesIO()
+
         fig.savefig(
             buffer,
             format="png",
@@ -49,16 +51,32 @@ def render_chart(fig):
             bbox_inches="tight",
             facecolor="white"
         )
+
+        png_bytes = buffer.getvalue()
+
+        # Pastikan PNG benar-benar valid
         buffer.seek(0)
+        with Image.open(buffer) as image:
+            image.verify()
 
-        image = Image.open(buffer).convert("RGB")
-        st.write("Ukuran PNG:", image.size)
-        st.image(image)
+        st.write("Ukuran file PNG:", len(png_bytes), "bytes")
 
-        buffer.close()
+        # Tes: tampilkan gambar melalui Streamlit
+        st.image(png_bytes)
+
+        # Sediakan unduhan untuk menguji hasil PNG secara terpisah
+        st.download_button(
+            "Unduh grafik untuk tes",
+            data=png_bytes,
+            file_name="grafik_tes.png",
+            mime="image/png"
+        )
+
     except Exception as e:
         st.exception(e)
+
     finally:
+        buffer.close()
         plt.close(fig)
 
 # =========================
