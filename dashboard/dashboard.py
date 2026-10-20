@@ -1,3 +1,4 @@
+```python
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -27,50 +28,38 @@ plt.rcParams.update({
     "text.color": TEXT_COLOR,
     "figure.facecolor": "white",
     "axes.facecolor": "white",
-    "axes.edgecolor": "#D9E2DE"
+    "axes.edgecolor": "#D9E2DE",
+    "axes.titlecolor": TEXT_COLOR
 })
 
 # =========================
-# LOKASI DATA
+# LOAD DATA
 # =========================
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR.parent / "data"
 
 
-# =========================
-# LOAD DATA
-# =========================
 @st.cache_data
 def load_data():
     hour_path = DATA_DIR / "hour.csv"
-    day_path = DATA_DIR / "day.csv"
 
     if not hour_path.exists():
         raise FileNotFoundError(
             f"File tidak ditemukan: {hour_path}"
         )
 
-    if not day_path.exists():
-        raise FileNotFoundError(
-            f"File tidak ditemukan: {day_path}"
-        )
-
     hourly = pd.read_csv(hour_path)
-    daily = pd.read_csv(day_path)
-
     hourly["dteday"] = pd.to_datetime(hourly["dteday"])
-    daily["dteday"] = pd.to_datetime(daily["dteday"])
 
-    return hourly, daily
+    return hourly
 
 
 try:
-    hour_df, day_df = load_data()
+    hour_df = load_data()
 except Exception as e:
     st.error("Data dashboard gagal dimuat.")
     st.exception(e)
     st.stop()
-
 
 # =========================
 # LABEL MUSIM DAN CUACA
@@ -89,16 +78,8 @@ weather_labels = {
     4: "Cuaca ekstrem"
 }
 
-season_order = [
-    "Musim semi",
-    "Musim panas",
-    "Musim gugur",
-    "Musim dingin"
-]
-
-
 # =========================
-# SIDEBAR: LOGO DAN FILTER
+# SIDEBAR
 # =========================
 with st.sidebar:
     st.markdown(
@@ -133,30 +114,29 @@ with st.sidebar:
     min_date = hour_df["dteday"].min().date()
     max_date = hour_df["dteday"].max().date()
 
-    selected_dates = st.date_input(
-        "Rentang Waktu",
+    start_date = st.date_input(
+        "Tanggal mulai",
+        value=min_date,
         min_value=min_date,
         max_value=max_date,
-        value=(min_date, max_date),
-        format="DD/MM/YYYY"
+        key="start_date"
     )
 
-    st.caption("Pilih rentang tanggal untuk memperbarui analisis.")
+    end_date = st.date_input(
+        "Tanggal akhir",
+        value=max_date,
+        min_value=min_date,
+        max_value=max_date,
+        key="end_date"
+    )
 
+    if start_date > end_date:
+        st.warning(
+            "Tanggal mulai tidak boleh melewati tanggal akhir."
+        )
+        st.stop()
 
-# =========================
-# MENANGANI PILIHAN TANGGAL
-# =========================
-if isinstance(selected_dates, (tuple, list)):
-    if len(selected_dates) == 2:
-        start_date, end_date = selected_dates
-    elif len(selected_dates) == 1:
-        start_date = end_date = selected_dates[0]
-    else:
-        start_date, end_date = min_date, max_date
-else:
-    start_date = end_date = selected_dates
-
+    st.caption("Pilih tanggal mulai dan akhir untuk memfilter data.")
 
 # =========================
 # FILTER DATA
@@ -165,7 +145,6 @@ main_df = hour_df[
     (hour_df["dteday"].dt.date >= start_date)
     & (hour_df["dteday"].dt.date <= end_date)
 ].copy()
-
 
 # =========================
 # HEADER DASHBOARD
@@ -185,11 +164,8 @@ st.caption(
 st.divider()
 
 if main_df.empty:
-    st.warning(
-        "Tidak ada data pada rentang tanggal yang dipilih."
-    )
+    st.warning("Tidak ada data pada rentang tanggal yang dipilih.")
     st.stop()
-
 
 # =========================
 # RINGKASAN PENYEWAAN
@@ -210,33 +186,35 @@ peak_hour = int(
 
 col1, col2, col3 = st.columns(3)
 
-with col1:
-    st.metric(
-        label="Total Penyewaan",
-        value=f"{total_rentals:,.0f}"
-    )
+col1.metric(
+    "Total Penyewaan",
+    f"{total_rentals:,.0f}"
+)
 
-with col2:
-    st.metric(
-        label="Rata-rata Penyewaan per Jam",
-        value=f"{average_rentals:,.1f}"
-    )
+col2.metric(
+    "Rata-rata Penyewaan per Jam",
+    f"{average_rentals:,.1f}"
+)
 
-with col3:
-    st.metric(
-        label="Jam dengan Rata-rata Tertinggi",
-        value=f"{peak_hour:02d}:00"
-    )
+col3.metric(
+    "Jam dengan Rata-rata Tertinggi",
+    f"{peak_hour:02d}:00"
+)
 
 st.divider()
-
 
 # =========================
 # GRAFIK 1: POLA PER JAM
 # =========================
 st.subheader("Pola Penyewaan Berdasarkan Jam")
 
-fig, ax = plt.subplots(figsize=(12, 4.5))
+hourly_avg = (
+    main_df.groupby("hr", as_index=False)["cnt"]
+    .mean()
+    .sort_values("hr")
+)
+
+fig, ax = plt.subplots(figsize=(12, 4.8))
 
 ax.plot(
     hourly_avg["hr"],
@@ -244,33 +222,31 @@ ax.plot(
     color=PRIMARY_COLOR,
     linewidth=2.5,
     marker="o",
-    markersize=5,
-    markerfacecolor="white",
-    markeredgewidth=1.8
+    markersize=5
 )
 
 ax.fill_between(
     hourly_avg["hr"],
     hourly_avg["cnt"],
     color=SECONDARY_COLOR,
-    alpha=0.65
+    alpha=0.8
 )
 
-ax.set_xlabel("Jam", fontsize=11)
-ax.set_ylabel("Rata-rata Penyewaan", fontsize=11)
+ax.set_xlabel("Jam", labelpad=10)
+ax.set_ylabel("Rata-rata Penyewaan", labelpad=10)
 
-ax.set_xticks(range(24))
+# Label jam dibuat mendatar dan ditampilkan setiap 2 jam
+ax.set_xticks(range(0, 24, 2))
 ax.set_xticklabels(
-    [f"{h:02d}:00" for h in range(24)],
+    [f"{h:02d}:00" for h in range(0, 24, 2)],
     rotation=0,
-    ha="center",
-    fontsize=8
+    ha="center"
 )
 
 ax.grid(axis="y", alpha=0.25)
 ax.grid(axis="x", visible=False)
 ax.set_axisbelow(True)
-ax.margins(x=0.02, y=0.15)
+ax.margins(y=0.15)
 
 sns.despine(ax=ax)
 fig.tight_layout()
@@ -285,41 +261,32 @@ st.caption(
 
 st.divider()
 
+# =========================
+# SIAPKAN DATA MUSIM
+# =========================
+col1, col2 = st.columns(2)
 
-# =========================
-# MENYIAPKAN DATA MUSIM
-# =========================
 season_avg = (
     main_df.groupby("season", as_index=False)["cnt"]
     .mean()
 )
 
-season_avg["Musim"] = (
-    season_avg["season"].map(season_labels)
+season_avg["Musim"] = season_avg["season"].map(season_labels)
+
+season_order = [
+    "Musim semi",
+    "Musim panas",
+    "Musim gugur",
+    "Musim dingin"
+]
+
+season_avg["Musim"] = pd.Categorical(
+    season_avg["Musim"],
+    categories=season_order,
+    ordered=True
 )
 
-season_avg = season_avg.dropna(subset=["Musim"])
-
-
-# =========================
-# MENYIAPKAN DATA CUACA
-# =========================
-weather_avg = (
-    main_df.groupby("weathersit", as_index=False)["cnt"]
-    .mean()
-)
-
-weather_avg["Kondisi Cuaca"] = (
-    weather_avg["weathersit"].map(weather_labels)
-)
-
-weather_avg = weather_avg.dropna(subset=["Kondisi Cuaca"])
-
-
-# =========================
-# GRAFIK 2 DAN 3
-# =========================
-col1, col2 = st.columns(2)
+season_avg = season_avg.sort_values("Musim")
 
 # =========================
 # GRAFIK 2: MUSIM
@@ -327,18 +294,10 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("Penyewaan Berdasarkan Musim")
 
-    season_chart = season_avg.copy()
-    season_chart["Musim"] = pd.Categorical(
-        season_chart["Musim"],
-        categories=season_order,
-        ordered=True
-    )
-    season_chart = season_chart.sort_values("Musim")
+    fig, ax = plt.subplots(figsize=(7, 4.8))
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
-
-    bars = sns.barplot(
-        data=season_chart,
+    sns.barplot(
+        data=season_avg,
         x="Musim",
         y="cnt",
         color=PRIMARY_COLOR,
@@ -346,8 +305,9 @@ with col1:
     )
 
     ax.set_xlabel("")
-    ax.set_ylabel("Rata-rata Penyewaan", fontsize=10)
+    ax.set_ylabel("Rata-rata Penyewaan", labelpad=8)
 
+    # Nama musim mendatar
     ax.tick_params(
         axis="x",
         labelrotation=0,
@@ -361,7 +321,7 @@ with col1:
     for container in ax.containers:
         ax.bar_label(
             container,
-            fmt="%.1f",
+            fmt="%.0f",
             padding=3,
             fontsize=9
         )
@@ -374,15 +334,25 @@ with col1:
     plt.close(fig)
 
     if not season_avg.empty:
-        best_season = season_avg.loc[
-            season_avg["cnt"].idxmax()
-        ]
-
+        best_season = season_avg.loc[season_avg["cnt"].idxmax()]
         st.caption(
             f"Rata-rata tertinggi: {best_season['Musim']} "
             f"({best_season['cnt']:,.1f} penyewaan)."
         )
 
+# =========================
+# SIAPKAN DATA CUACA
+# =========================
+weather_avg = (
+    main_df.groupby("weathersit", as_index=False)["cnt"]
+    .mean()
+)
+
+weather_avg["Kondisi Cuaca"] = (
+    weather_avg["weathersit"].map(weather_labels)
+)
+
+weather_avg = weather_avg.sort_values("cnt", ascending=True)
 
 # =========================
 # GRAFIK 3: CUACA
@@ -390,43 +360,39 @@ with col1:
 with col2:
     st.subheader("Penyewaan Berdasarkan Cuaca")
 
-    weather_chart = weather_avg.sort_values(
-        "cnt",
-        ascending=False
-    ).copy()
-
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(7, 4.8))
 
     sns.barplot(
-        data=weather_chart,
-        x="Kondisi Cuaca",
-        y="cnt",
+        data=weather_avg,
+        x="cnt",
+        y="Kondisi Cuaca",
         color=PRIMARY_COLOR,
         ax=ax
     )
 
-    ax.set_xlabel("")
-    ax.set_ylabel("Rata-rata Penyewaan", fontsize=10)
+    ax.set_xlabel("Rata-rata Penyewaan", labelpad=8)
+    ax.set_ylabel("")
 
+    # Nama kondisi cuaca mendatar
     ax.tick_params(
-        axis="x",
+        axis="y",
         labelrotation=0,
         labelsize=9
     )
 
-    ax.grid(axis="y", alpha=0.25)
-    ax.grid(axis="x", visible=False)
+    ax.grid(axis="x", alpha=0.25)
+    ax.grid(axis="y", visible=False)
     ax.set_axisbelow(True)
 
     for container in ax.containers:
         ax.bar_label(
             container,
-            fmt="%.1f",
-            padding=3,
+            fmt="%.0f",
+            padding=4,
             fontsize=9
         )
 
-    ax.margins(y=0.15)
+    ax.margins(x=0.2)
     sns.despine(ax=ax)
     fig.tight_layout()
 
@@ -434,10 +400,7 @@ with col2:
     plt.close(fig)
 
     if not weather_avg.empty:
-        best_weather = weather_avg.loc[
-            weather_avg["cnt"].idxmax()
-        ]
-
+        best_weather = weather_avg.loc[weather_avg["cnt"].idxmax()]
         st.caption(
             f"Rata-rata tertinggi pada kondisi "
             f"{best_weather['Kondisi Cuaca']} "
@@ -445,7 +408,6 @@ with col2:
         )
 
 st.divider()
-
 
 # =========================
 # TABEL DATA PENYEWAAN
@@ -465,12 +427,9 @@ with st.expander("Lihat data penyewaan"):
         ]
     ].copy()
 
-    display_df["season"] = (
-        display_df["season"].map(season_labels)
-    )
-
-    display_df["weathersit"] = (
-        display_df["weathersit"].map(weather_labels)
+    display_df["season"] = display_df["season"].map(season_labels)
+    display_df["weathersit"] = display_df["weathersit"].map(
+        weather_labels
     )
 
     display_df.columns = [
@@ -493,11 +452,7 @@ with st.expander("Lihat data penyewaan"):
         hide_index=True
     )
 
-
-# =========================
-# SUMBER DATA
-# =========================
 st.caption(
-    "Sumber: Bike Sharing Dataset, "
-    "Capital Bikeshare, 2011–2012."
+    "Sumber: Bike Sharing Dataset, Capital Bikeshare, 2011–2012."
 )
+```
