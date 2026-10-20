@@ -1,117 +1,69 @@
-# Pedal Insights 🚲
+# 🚲 Pedal Insights: Bike Sharing Data Analysis
 
-### Bike Sharing Data Analysis Dashboard
+## Deskripsi Proyek
 
-Pedal Insights adalah dashboard interaktif untuk mengeksplorasi pola penyewaan sepeda berdasarkan waktu, musim, dan kondisi cuaca menggunakan **Bike Sharing Dataset**. Dashboard dibangun dengan Python dan Streamlit untuk membantu pengguna memahami pola penggunaan sepeda melalui visualisasi yang mudah dibaca.
+Proyek ini bertujuan menganalisis pola penyewaan sepeda menggunakan _Bike Sharing Dataset_ tahun 2011–2012. Analisis dilakukan untuk memahami waktu dengan permintaan penyewaan tertinggi serta hubungan musim dan kondisi cuaca dengan jumlah penyewaan sepeda.
 
-## Latar Belakang
+Hasil analisis disajikan dalam bentuk visualisasi interaktif menggunakan Streamlit agar pola penyewaan dapat dipahami dengan lebih mudah.
 
-Analisis ini berfokus pada pola jumlah penyewaan sepeda dan bagaimana pola tersebut berbeda menurut jam dalam sehari, musim, serta kondisi cuaca. Hasilnya ditampilkan melalui grafik interaktif agar tren utama lebih mudah diamati.
+## Business Questions
 
-## Pertanyaan Analisis
+Analisis ini berfokus pada dua pertanyaan utama:
 
-1. Bagaimana pola rata-rata penyewaan sepeda berdasarkan jam dalam sehari?
-2. Bagaimana pola rata-rata penyewaan sepeda berdasarkan musim dan kondisi cuaca?
-
-## Ringkasan Temuan
-
-Berdasarkan analisis yang telah dilakukan:
-
-- Rata-rata penyewaan per jam tertinggi tercatat pada pukul **17.00** (sekitar **461,45**) dan pukul **18.00** (sekitar **425,51**).
-- Rata-rata penyewaan terendah tercatat pada pukul **04.00** (sekitar **6,35**).
-- Berdasarkan musim, **musim 3** memiliki rata-rata penyewaan sekitar **236,02**, sedangkan musim 1 sekitar **111,11**.
-- Pada kategori cuaca, **cuaca 1** (cerah atau sedikit berawan) memiliki rata-rata penyewaan sekitar **204,87**.
-- Kombinasi musim 3 dan cuaca 1 menunjukkan rata-rata penyewaan sekitar **244,49**.
-
-> Catatan: nilai di atas adalah rata-rata berdasarkan analisis sebelumnya, bukan total penyewaan. Pastikan angka ini konsisten dengan notebook final sebelum submission.
-
-## Struktur Proyek
-
-```text
-submission_bike_sharing/
-├── dashboard/
-│   └── dashboard.py
-├── data/
-│   ├── day.csv
-│   └── hour.csv
-├── notebook.ipynb
-├── README.md
-├── requirements.txt
-└── url.txt
-```
-
-## Setup Environment
-
-Pastikan Python telah terpasang. Buka terminal pada **folder utama** `submission_bike_sharing`, yaitu folder yang berisi `dashboard`, `data`, dan `requirements.txt`.
-
-### Opsi 1 — Shell / Terminal
-
-Buat virtual environment (opsional tetapi disarankan):
-
-**Windows**
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-**macOS / Linux**
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install library yang diperlukan:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-### Opsi 2 — Anaconda
-
-Jika menggunakan Anaconda, buat dan aktifkan environment:
-
-```bash
-conda create --name bike-sharing python=3.12
-conda activate bike-sharing
-python -m pip install -r requirements.txt
-```
-
-## ▶️ Menjalankan Dashboard
-
-Jalankan perintah berikut dari **folder utama proyek**:
-
-```bash
-streamlit run dashboard/dashboard.py
-```
-
-Streamlit akan menampilkan alamat lokal di terminal. Buka alamat tersebut di browser untuk melihat dashboard.
-
-Jika perintah tidak menemukan file, pastikan terminal berada di folder `submission_bike_sharing`, bukan di dalam folder `dashboard`.
+1. Bagaimana rata-rata jumlah penyewaan sepeda berdasarkan jam, dan pada jam berapa permintaan mencapai puncaknya?
+2. Bagaimana rata-rata jumlah penyewaan sepeda berdasarkan musim dan kondisi cuaca, serta kombinasi mana yang memiliki rata-rata penyewaan tertinggi?
 
 ## Dataset
 
-Dashboard menggunakan file CSV berikut:
+Dataset yang digunakan adalah _Bike Sharing Dataset_, yang terdiri dari data penyewaan sepeda per jam (`hour.csv`) dan per hari (`day.csv`).
 
-- `data/hour.csv` — data penyewaan sepeda per jam.
-- `data/day.csv` — data penyewaan sepeda per hari.
+Tahapan analisis meliputi pengumpulan data, pemeriksaan kualitas data, pembersihan data, eksplorasi data, visualisasi, serta penyusunan kesimpulan dan rekomendasi.
 
-Simpan file dataset di folder `data/` sesuai struktur proyek di atas.
+## Hasil Analisis
+
+Berdasarkan hasil eksplorasi data, diperoleh beberapa temuan utama:
+
+- **Jam penyewaan tertinggi:** pukul 17.00, dengan rata-rata 461,45 penyewaan sepeda.
+- **Musim dengan rata-rata penyewaan tertinggi:** musim gugur (_fall_), dengan rata-rata 236,02 penyewaan.
+- **Kondisi cuaca:** cuaca cerah atau sedikit berawan memiliki rata-rata penyewaan tertinggi, yaitu 204,87.
+- **Kombinasi musim dan cuaca:** musim gugur dengan cuaca cerah atau sedikit berawan memiliki rata-rata penyewaan tertinggi, yaitu 244,49.
+
+Temuan ini menunjukkan bahwa waktu dan kondisi lingkungan perlu dipertimbangkan dalam perencanaan ketersediaan sepeda.
+
+## Kesimpulan dan Rekomendasi
+
+Penyewaan sepeda cenderung mencapai puncaknya pada sore hari, terutama pukul 17.00–18.00. Rata-rata penyewaan juga berbeda berdasarkan musim dan kondisi cuaca.
+
+Berdasarkan temuan tersebut, pengelola layanan sepeda disarankan untuk menyesuaikan ketersediaan sepeda dengan jam permintaan tinggi serta mempertimbangkan pola musiman dan kondisi cuaca dalam perencanaan operasional.
+
+## Instalasi dan Cara Menjalankan
+
+Pastikan Python sudah terpasang di komputer.
+
+1. Instal library yang diperlukan dengan menjalankan perintah berikut di terminal:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Jalankan dashboard dari folder utama proyek:
+
+   ```bash
+   streamlit run dashboard/dashboard.py
+   ```
+
+3. Dashboard akan terbuka melalui browser. Jika tidak terbuka otomatis, ikuti alamat lokal yang ditampilkan di terminal.
 
 ## Teknologi yang Digunakan
 
-- **Python** — bahasa pemrograman.
-- **Pandas** — membaca dan mengolah data.
-- **NumPy** — operasi numerik.
-- **Matplotlib** — visualisasi data.
-- **Seaborn** — visualisasi statistik (jika digunakan dalam kode analisis).
-- **Streamlit** — membangun dashboard interaktif.
+- **Python** — bahasa pemrograman yang digunakan dalam proses analisis data.
+- **Pandas** — digunakan untuk membaca, membersihkan, dan mengolah dataset.
+- **NumPy** — mendukung operasi numerik dalam analisis data.
+- **Matplotlib dan Seaborn** — digunakan untuk membuat visualisasi data pada notebook.
+- **Streamlit** — digunakan untuk membangun dashboard interaktif yang menampilkan hasil analisis.
 
-## Dashboard Online
+## Dashboard
 
-URL dashboard Streamlit Community Cloud akan ditambahkan setelah deployment berhasil.
+Dashboard menampilkan ringkasan data penyewaan sepeda, visualisasi rata-rata penyewaan berdasarkan jam, serta analisis berdasarkan musim dan kondisi cuaca.
 
-## Catatan Penggunaan
-
-Pastikan `requirements.txt`, folder `data/`, dan file `dashboard/dashboard.py` sudah tersedia sebelum menjalankan aplikasi. Untuk hasil analisis yang dapat direproduksi, gunakan notebook dan dataset yang sama dengan yang digunakan dalam dashboard.
+Jika dashboard telah di-deploy, tautan akses dapat dicantumkan di file `url.txt`.
