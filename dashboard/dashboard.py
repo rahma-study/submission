@@ -147,8 +147,8 @@ day_filtered = day_df[
 st.title("🚲 Bike Sharing Dashboard")
 
 st.write(
-    "Dashboard analisis pola penyewaan sepeda berdasarkan jam "
-    "dan musim pada periode 2011–2012."
+    "Dashboard analisis pola penyewaan sepeda berdasarkan "
+    "jam, musim, dan tren bulanan pada periode 2011–2012."
 )
 
 st.caption(
@@ -196,6 +196,28 @@ best_season = season_avg.loc[
 worst_season = season_avg.loc[
     season_avg["avg_daily_rentals"].idxmin()
 ]
+
+# =========================
+# PERHITUNGAN TREN BULANAN
+# =========================
+monthly_avg = (
+    day_filtered.assign(
+        Tahun=day_filtered["dteday"].dt.year,
+        Bulan=day_filtered["dteday"].dt.month
+    )
+    .groupby(["Tahun", "Bulan"], as_index=False)["cnt"]
+    .mean()
+    .rename(columns={"cnt": "Rata-rata Penyewaan Harian"})
+)
+
+monthly_avg["Periode"] = pd.to_datetime(
+    monthly_avg["Tahun"].astype(str)
+    + "-"
+    + monthly_avg["Bulan"].astype(str)
+    + "-01"
+)
+
+monthly_avg = monthly_avg.sort_values("Periode")
 
 # =========================
 # RINGKASAN PENYEWAAN
@@ -369,6 +391,61 @@ with st.expander("Lihat rincian rata-rata penyewaan per musim"):
         use_container_width=True,
         hide_index=True
     )
+
+st.divider()
+
+# =========================
+# VISUALISASI 3: TREN BULANAN
+# =========================
+st.subheader(
+    "3. Tren Rata-rata Penyewaan Sepeda per Bulan"
+)
+
+st.write(
+    "Grafik ini menunjukkan perubahan rata-rata penyewaan "
+    "sepeda harian dari bulan ke bulan selama periode analisis."
+)
+
+monthly_chart = monthly_avg.set_index("Periode")[
+    ["Rata-rata Penyewaan Harian"]
+]
+
+st.line_chart(
+    monthly_chart,
+    color=PRIMARY_COLOR,
+    height=350,
+    y_label="Rata-rata penyewaan per hari"
+)
+
+if not monthly_avg.empty:
+    highest_month = monthly_avg.loc[
+        monthly_avg["Rata-rata Penyewaan Harian"].idxmax()
+    ]
+
+    lowest_month = monthly_avg.loc[
+        monthly_avg["Rata-rata Penyewaan Harian"].idxmin()
+    ]
+
+    col_month1, col_month2 = st.columns(2)
+
+    with col_month1:
+        st.metric(
+            "Rata-rata Tertinggi per Bulan",
+            f"{highest_month['Rata-rata Penyewaan Harian']:,.2f}",
+            f"{int(highest_month['Bulan']):02d}/{int(highest_month['Tahun'])}"
+        )
+
+    with col_month2:
+        st.metric(
+            "Rata-rata Terendah per Bulan",
+            f"{lowest_month['Rata-rata Penyewaan Harian']:,.2f}",
+            f"{int(lowest_month['Bulan']):02d}/{int(lowest_month['Tahun'])}"
+        )
+
+st.caption(
+    "Rata-rata dihitung dari jumlah penyewaan harian "
+    "pada setiap bulan dan tahun yang dipilih."
+)
 
 st.divider()
 
