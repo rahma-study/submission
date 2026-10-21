@@ -21,7 +21,7 @@ Dataset yang digunakan adalah *Bike Sharing Dataset*, yang terdiri dari:
 - `hour.csv`: data penyewaan sepeda per jam.
 - `day.csv`: data penyewaan sepeda per hari.
 
-Tahapan analisis meliputi pengumpulan data, pemeriksaan kualitas data, pembersihan data, eksplorasi data, visualisasi, analisis pola penyewaan, serta penyusunan kesimpulan dan rekomendasi.
+Tahapan analisis meliputi pemeriksaan kualitas data, pembersihan data, eksplorasi data, visualisasi, analisis pola penyewaan, serta penyusunan kesimpulan dan rekomendasi.
 
 ## Hasil Analisis
 
@@ -50,9 +50,9 @@ Berdasarkan hasil tersebut, pengelola layanan sepeda disarankan untuk:
 ### Shell/Terminal
 
 1. Unduh atau ekstrak proyek, kemudian buka folder utama proyek melalui terminal.
-2. Buat dan aktifkan virtual environment.
+2. Buat dan aktifkan virtual environment sesuai sistem operasi yang digunakan.
 
-**Windows:**
+**Windows (Command Prompt):**
 
 ```bash
 python -m venv .venv
@@ -95,6 +95,6 @@ Dashboard akan terbuka melalui browser. Jika tidak terbuka secara otomatis, akse
 
 ## Dashboard
 
-Dashboard Pedal Insights menyajikan ringkasan dan visualisasi data penyewaan sepeda berdasarkan jam, musim, dan kondisi cuaca. Dashboard dilengkapi filter rentang tanggal yang memungkinkan pengguna mengeksplorasi pola penyewaan pada periode tertentu.
+Dashboard Pedal Insights menyajikan ringkasan dan visualisasi data penyewaan sepeda berdasarkan jam, musim, tren bulanan, dan kondisi cuaca. Dashboard dilengkapi filter rentang tanggal yang memungkinkan pengguna mengeksplorasi pola penyewaan pada periode tertentu.
 
 Jika dashboard telah di-deploy, tautan akses dapat dicantumkan pada file `url.txt`.
